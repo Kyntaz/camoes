@@ -1,0 +1,25 @@
+{
+  "name": "camoes",
+  "version": "1.0.0",
+  "description": "A grammar library for all your languaging needs",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "npx jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kyntaz/camoes.git"
+  },
+  "author": "Pedro Quintas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Kyntaz/camoes/issues"
+  },
+  "homepage": "https://github.com/Kyntaz/camoes#readme",
+  "devDependencies": {
+    "@types/jest": "^28.1.6",
+    "jest": "^28.1.3",
+    "ts-jest": "^28.0.7"
+  }
+}
