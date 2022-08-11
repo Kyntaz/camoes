@@ -1,27 +1,28 @@
+import { Invocation } from "./Invocation";
 import { Matcher } from "./Matcher";
-import { Rule, RuleLiteral, StructureMapper } from "./Rule";
-import { Variable } from "./Variable";
+import { Rule } from "./Rule";
+import { RuleLiteral } from "./RuleLiteral";
+import { StructureMapper } from "./StructureMapper";
 
 export class Grammar {
-    matchers = new Map<string, Matcher>();
-    variables = new Map<string, Variable>();
+    #matchers = new Map<string, Matcher>();
 
-    match(name: string, structure: StructureMapper, sequence: RuleLiteral[]) {
-        let matcher = this.matchers.get(name);
+    #getOrMakeMatcher(name: string) {
+        let matcher = this.#matchers.get(name);
         if (!matcher) {
             matcher = new Matcher(name);
-            this.matchers.set(name, matcher);
+            this.#matchers.set(name, matcher);
         }
-
-        matcher.addRule(new Rule(structure, sequence));
+        return matcher;
     }
 
-    v(name: string) {
-        let variable = this.variables.get(name);
-        if (!variable) {
-            variable = new Variable(name);
-            this.variables.set(name, variable);
-        }
-        return variable;
+    match(name: string, sequence: RuleLiteral[]) {
+        const rule = new Rule(sequence);
+        this.#getOrMakeMatcher(name).addRule(rule);
+        return rule;
+    }
+
+    invoke(name: string, mapper: StructureMapper) {
+        return new Invocation(this.#getOrMakeMatcher(name), mapper);
     }
 }

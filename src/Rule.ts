@@ -1,21 +1,10 @@
-import { Variable } from "./Variable";
-
-export type RuleLiteral = string | Variable | RegExp;
-export type StructureMapper = {
-    [key: string]: string | StructureMapper;
-};
+import { RuleLiteral } from "./RuleLiteral";
 
 export class Rule {
-    #structure: StructureMapper;
     #sequence: RuleLiteral[];
 
-    constructor(structure: StructureMapper, sequence: RuleLiteral[]) {
-        this.#structure = structure
+    constructor(sequence: RuleLiteral[]) {
         this.#sequence = sequence;
-    }
-
-    get structure() {
-        return this.#structure;
     }
 
     get sequence() {
