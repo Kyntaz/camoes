@@ -1,1 +1,5 @@
-export const hello = "Hello there!";
+export {
+    grammar,
+    variable,
+    invoke,
+} from "./Functional";

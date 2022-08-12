@@ -30,7 +30,7 @@ describe("#RuleLiteralHelpers", () => {
 
     describe(".isInvocation", () => {
         it("returns true for invocations", () => {
-            const literal = new Invocation(new Matcher("invocation"), {});
+            const literal = new Invocation(new Matcher("invocation"), new Variable("variable"));
             expect(helpers.isInvocation(literal)).toBe(true);
         });
 

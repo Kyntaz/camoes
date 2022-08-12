@@ -1,16 +1,19 @@
+import { Invocation } from "./Invocation";
 import { helpers, RuleLiteral } from "./RuleLiteral";
+import { mappersAreEqual } from "./StructureMapper";
 import { Variable } from "./Variable";
+import { VariableMap } from "./VariableMap";
 
 export class ApplicationError extends Error { };
 
 export const applyLiterals = (
     literals: RuleLiteral[],
     text: string,
-    variableMap: Map<string, string>,
+    variableMap: VariableMap,
     {
         test = false,
     } = {}
-) => {
+): string => {
     return literals.reduce<string>((currentText, literal, i) => {
         if (helpers.isString(literal)) {
             return applyStringLiteral(literal, currentText);
@@ -23,7 +26,7 @@ export const applyLiterals = (
                 { test }
             );
         } else if (helpers.isInvocation(literal)) {
-            return currentText;
+            return applyInvocationLiteral(literal, currentText, variableMap);
         } else if (helpers.isRegExp(literal)) {
             return applyRegExpLiteral(literal, currentText);
         } else {
@@ -32,7 +35,7 @@ export const applyLiterals = (
     }, text);
 };
 
-const tryLiteral = (literal: RuleLiteral, text: string, variableMap: Map<string, string>) => {
+const tryLiteral = (literal: RuleLiteral, text: string, variableMap: VariableMap) => {
     try {
         applyLiterals([literal], text, variableMap, { test: true });
         return true;
@@ -56,7 +59,7 @@ const applyVariableLiteral = (
     literal: Variable,
     nextLiteral: RuleLiteral,
     text: string,
-    variableMap: Map<string, string>,
+    variableMap: VariableMap,
     {
         test = false,
     } = {}
@@ -84,4 +87,24 @@ const applyRegExpLiteral = (literal: RegExp, text: string) => {
         throw new ApplicationError();
     }
     return text.slice(match.length);
+}
+
+const applyInvocationLiteral = (
+    literal: Invocation,
+    text: string,
+    variableMap: VariableMap,
+    {
+        test = false,
+    } = {}
+) => {
+    const { remainingText, result } = literal.matcher.applyPartial(text);
+    const value = variableMap.get(literal.variable.name);
+
+    if (!value && !test) {
+        variableMap.set(literal.variable.name, result);
+    } else if (value && (typeof value !== "object" || !mappersAreEqual(result, value))) {
+        throw new ApplicationError();
+    }
+
+    return remainingText;
 }

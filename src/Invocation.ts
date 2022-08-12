@@ -1,20 +1,20 @@
 import { Matcher } from "./Matcher";
-import { StructureMapper } from "./StructureMapper";
+import { Variable } from "./Variable";
 
 export class Invocation {
     #matcher: Matcher;
-    #mapper: StructureMapper;
+    #variable: Variable;
 
-    constructor(matcher: Matcher, mapper: StructureMapper) {
+    constructor(matcher: Matcher, variable: Variable) {
         this.#matcher = matcher;
-        this.#mapper = mapper;
+        this.#variable = variable;
     }
 
     get matcher() {
         return this.#matcher;
     }
 
-    get mapper() {
-        return this.#mapper;
+    get variable() {
+        return this.#variable;
     }
 }

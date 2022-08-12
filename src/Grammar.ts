@@ -3,6 +3,7 @@ import { Matcher } from "./Matcher";
 import { Rule } from "./Rule";
 import { RuleLiteral } from "./RuleLiteral";
 import { StructureMapper } from "./StructureMapper";
+import { Variable } from "./Variable";
 
 export class Grammar {
     #matchers = new Map<string, Matcher>();
@@ -16,13 +17,13 @@ export class Grammar {
         return matcher;
     }
 
-    match(name: string, sequence: RuleLiteral[]) {
-        const rule = new Rule(sequence);
+    match(name: string, mapper: StructureMapper, sequence: RuleLiteral[]) {
+        const rule = new Rule(sequence, mapper);
         this.#getOrMakeMatcher(name).addRule(rule);
         return rule;
     }
 
-    invoke(name: string, mapper: StructureMapper) {
-        return new Invocation(this.#getOrMakeMatcher(name), mapper);
+    invoke(name: string, variable: Variable) {
+        return new Invocation(this.#getOrMakeMatcher(name), variable);
     }
 }
