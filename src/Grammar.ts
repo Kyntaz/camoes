@@ -20,10 +20,18 @@ export class Grammar {
     match(name: string, mapper: StructureMapper, sequence: RuleLiteral[]) {
         const rule = new Rule(sequence, mapper);
         this.#getOrMakeMatcher(name).addRule(rule);
-        return rule;
+        return this;
     }
 
     invoke(name: string, variable: Variable) {
         return new Invocation(this.#getOrMakeMatcher(name), variable);
+    }
+
+    parse(startMatcher: string, text: string) {
+        const matcher = this.#matchers.get(startMatcher);
+        if (!matcher) {
+            throw new Error("Unknown start matcher.");
+        }
+        return matcher.apply(text);
     }
 }

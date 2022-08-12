@@ -3,3 +3,4 @@ export {
     variable,
     invoke,
 } from "./Functional";
+export { Logger } from "./Logger";

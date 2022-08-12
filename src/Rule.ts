@@ -1,4 +1,4 @@
-import { ApplicationError, applyLiterals } from "./Apply";
+import { applyLiterals, getErrorAndLog } from "./Apply";
 import { RuleLiteral } from "./RuleLiteral";
 import { StructureMapper } from "./StructureMapper";
 import { makeEmptyVariableMap, VariableMap } from "./VariableMap";
@@ -33,7 +33,7 @@ export class Rule {
     apply(text: string) {
         const { remainingText, result } = this.applyPartial(text);
         if (remainingText !== "") {
-            throw new ApplicationError();
+            throw getErrorAndLog(`Could not apply rule: "${remainingText}" was not consumed from the input.`);
         }
         return result;
     }

@@ -1,4 +1,4 @@
-import { ApplicationError } from "./Apply";
+import { ApplicationError, getErrorAndLog } from "./Apply";
 import { Rule } from "./Rule";
 
 export class Matcher {
@@ -31,13 +31,13 @@ export class Matcher {
                 }
             }
         }
-        throw new ApplicationError();
+        throw getErrorAndLog(`Could not partially apply matcher ${this.name}.`);
     }
 
     apply(text: string) {
         const { remainingText, result } = this.applyPartial(text);
         if (remainingText !== "") {
-            throw new ApplicationError();
+            throw getErrorAndLog(`Could not apply matcher: "${remainingText}" was not consumed when parting ${this.name}.`);
         }
         return result;
     }

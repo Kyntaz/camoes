@@ -1,10 +1,18 @@
 import { Invocation } from "./Invocation";
+import { Logger } from "./Logger";
 import { helpers, RuleLiteral } from "./RuleLiteral";
 import { mappersAreEqual } from "./StructureMapper";
 import { Variable } from "./Variable";
 import { VariableMap } from "./VariableMap";
 
 export class ApplicationError extends Error { };
+
+export const getErrorAndLog = (message?: string) => {
+    if (message) {
+        Logger.log(message)
+    }
+    return new ApplicationError(message);
+}
 
 export const applyLiterals = (
     literals: RuleLiteral[],
@@ -49,7 +57,7 @@ const tryLiteral = (literal: RuleLiteral, text: string, variableMap: VariableMap
 
 const applyStringLiteral = (literal: string, text: string) => {
     if (!text.startsWith(literal)) {
-        throw new ApplicationError();
+        throw getErrorAndLog(`Can't apply string literal: "${text}" does not start with ${literal}.`);
     }
 
     return text.replace(literal, "");
@@ -68,25 +76,28 @@ const applyVariableLiteral = (
         const remainder = text.slice(i);
         if (tryLiteral(nextLiteral, remainder, variableMap)) {
             const value = variableMap.get(literal.name);
+            const realValue = text.slice(0, i);
 
             if (!value && !test) {
-                variableMap.set(literal.name, text.slice(0, i));
-            } else if (value && value !== text.slice(0, 1)) {
-                throw new ApplicationError();
+                variableMap.set(literal.name, realValue);
+            } else if (value && value !== realValue) {
+                throw getErrorAndLog(
+                    `Can't apply variable literal: ${literal.name}'s value "${value}" and "${realValue}" do not match.`
+                );
             }
             
             return remainder;
         }
     }
-    throw new ApplicationError();
+    throw getErrorAndLog(`Can't apply variable literal: No valid configuration for ${literal.name} found in "${text}".`);
 };
 
 const applyRegExpLiteral = (literal: RegExp, text: string) => {
     const match = text.match(literal);
     if (!match || match?.index !== 0) {
-        throw new ApplicationError();
+        throw getErrorAndLog(`Can't apply regex literal: "${text}" doesn't start with /${literal.source}/.`);
     }
-    return text.slice(match.length);
+    return text.slice(match[0].length);
 }
 
 const applyInvocationLiteral = (
@@ -103,7 +114,9 @@ const applyInvocationLiteral = (
     if (!value && !test) {
         variableMap.set(literal.variable.name, result);
     } else if (value && (typeof value !== "object" || !mappersAreEqual(result, value))) {
-        throw new ApplicationError();
+        throw getErrorAndLog(
+            `Can't apply invocation literal: ${literal.matcher}'s mapper was ${JSON.stringify(result)} and should be ${JSON.stringify(value)}`
+        );
     }
 
     return remainingText;
