@@ -28,13 +28,18 @@ export const applyLiterals = (
         } else if (helpers.isVariable(literal)) {
             return applyVariableLiteral(
                 literal,
-                literals[i+1],
+                (i + 1 < literals.length) ? literals[i+1] : null,
                 currentText,
                 variableMap,
                 { test }
             );
         } else if (helpers.isInvocation(literal)) {
-            return applyInvocationLiteral(literal, currentText, variableMap);
+            return applyInvocationLiteral(
+                literal,
+                currentText,
+                variableMap,
+                { test }
+            );
         } else if (helpers.isRegExp(literal)) {
             return applyRegExpLiteral(literal, currentText);
         } else {
@@ -65,31 +70,43 @@ const applyStringLiteral = (literal: string, text: string) => {
 
 const applyVariableLiteral = (
     literal: Variable,
-    nextLiteral: RuleLiteral,
+    nextLiteral: RuleLiteral | null,
     text: string,
     variableMap: VariableMap,
     {
         test = false,
     } = {}
 ) => {
-    for (let i = 1; i < text.length; i++) {
-        const remainder = text.slice(i);
-        if (tryLiteral(nextLiteral, remainder, variableMap)) {
-            const value = variableMap.get(literal.name);
-            const realValue = text.slice(0, i);
+    let realValue: string | null =  null;
+    let remainder = "";
 
-            if (!value && !test) {
-                variableMap.set(literal.name, realValue);
-            } else if (value && value !== realValue) {
-                throw getErrorAndLog(
-                    `Can't apply variable literal: ${literal.name}'s value "${value}" and "${realValue}" do not match.`
-                );
+    if (nextLiteral) {
+        for (let i = 1; i < text.length; i++) {
+            remainder = text.slice(i);
+            if (tryLiteral(nextLiteral, remainder, variableMap)) {
+                realValue = text.slice(0, i);
+                break;
             }
-            
-            return remainder;
         }
+    } else {
+        realValue = text;
     }
-    throw getErrorAndLog(`Can't apply variable literal: No valid configuration for ${literal.name} found in "${text}".`);
+    
+    if (!realValue) {
+        throw getErrorAndLog(`Can't apply variable literal: No valid configuration for ${literal.name} found in "${text}".`);
+    }
+
+    const value = variableMap.get(literal.name);
+
+    if (!value && !test) {
+        variableMap.set(literal.name, realValue);
+    } else if (value && value !== realValue) {
+        throw getErrorAndLog(
+            `Can't apply variable literal: ${literal.name}'s value "${value}" and "${realValue}" do not match.`
+        );
+    }
+    
+    return remainder;
 };
 
 const applyRegExpLiteral = (literal: RegExp, text: string) => {

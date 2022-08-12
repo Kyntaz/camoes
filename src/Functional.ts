@@ -14,5 +14,5 @@ export const invoke = (matcher: string, variableName: string) => {
     if (!grammarCache) {
         throw new Error("Cannot invoke before creating a grammar.");
     }
-    grammarCache.invoke(matcher, variable(variableName));
+    return grammarCache.invoke(matcher, variable(variableName));
 }

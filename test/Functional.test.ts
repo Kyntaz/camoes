@@ -1,5 +1,5 @@
 import { ApplicationError } from "../src/Apply";
-import { grammar } from "../src/Functional";
+import { grammar, invoke, variable } from "../src/Functional";
 
 describe("#Functional", () => {
     describe("when matching static strings", () => {
@@ -52,6 +52,166 @@ describe("#Functional", () => {
             const test = () => grammar()
                 .match("TestMatch", output, [/ab*a/])
                 .parse("TestMatch", "cabbbba");
+            expect(test).toThrowError(ApplicationError);
+        });
+
+        describe("when the rule has multiple segments", () => {
+            it("matches correct inputs", () => {
+                const output = { value: "constant" };
+                const result = grammar()
+                    .match("TestMatch", output, [/\*+/, "star", /\*+/])
+                    .parse("TestMatch", "***star**");
+                expect(result).toEqual(output);
+            });
+    
+            it("rejects incorrect inputs", () => {
+                const output = { value: "constant" };
+                const test = () => grammar()
+                    .match("TestMatch", output, [/\*+/, "star", /\*+/])
+                    .parse("TestMatch", "****star");
+                expect(test).toThrowError(ApplicationError);
+            });
+        });
+    });
+
+    describe("when matching variable literals", () => {
+        it("assigns the input to the variable", () => {
+            const result = grammar()
+                .match("TestMatch", { value: "$X" }, [variable("X")])
+                .parse("TestMatch", "Some input");
+            expect(result).toEqual({ value: "Some input" });
+        });
+
+        it("accepts correct inputs", () => {
+            const result = grammar()
+                .match("TestMatch", { value: "$X" }, [variable("X"), ",", variable("X")])
+                .parse("TestMatch", "abc,abc");
+            expect(result).toEqual({ value: "abc" });
+        });
+
+        it("rejects incorrect inputs", () => {
+            const test = () => grammar()
+                .match("TestMatch", { value: "$X" }, [variable("X"), ",", variable("X")])
+                .parse("TestMatch", "abc,ghf");
+            expect(test).toThrow(ApplicationError);
+        });
+
+        describe("when the rule has multiple segments", () => {
+            it("matches correct inputs", () => {
+                const result = grammar()
+                    .match("TestMatch", {
+                        x: "$X",
+                        y: "$Y",
+                        inner: {
+                            z: "$Z",
+                        },
+                    }, ["(", variable("X"), ",", variable("Y"), ")", /[\-=]+/, variable("Z")])
+                    .parse("TestMatch", "(abc,def)==-=Hello there!");
+                expect(result).toEqual({
+                    x: "abc",
+                    y: "def",
+                    inner: {
+                        z:  "Hello there!",
+                    },
+                });
+            });
+
+            it("rejects incorrect inputs", () => {
+                const test = () => grammar()
+                    .match("TestMatch", {
+                        x: "$X",
+                        y: "$Y",
+                        inner: {
+                            z: "$Z",
+                        },
+                    }, ["(", variable("X"), ",", variable("Y"), ")", /[\-=]+/, variable("Z")])
+                    .parse("TestMatch", "(abc,def) = Hello there!");
+                expect(test).toThrowError(ApplicationError);
+            });
+        });
+    });
+
+    describe("when matching invocations", () => {
+        it("matches correct inputs", () => {
+            const result = grammar()
+                .match("InnerMatch", { value: "$X" }, ["(", variable("X"), ")"])
+                .match("TestMatch", { inner: "$X" }, [invoke("InnerMatch", "X")])
+                .parse("TestMatch", "(read this)");
+            expect(result).toEqual({
+                inner: {
+                    value: "read this",
+                },
+            });
+        });
+
+        it("rejects incorrect inputs", () => {
+            const test = () => grammar()
+                .match("InnerMatch", { value: "$X" }, ["(", variable("X"), ")"])
+                .match("TestMatch", { inner: "$X" }, [invoke("InnerMatch", "X")])
+                .parse("TestMatch", "(read this)->");
+            expect(test).toThrowError(ApplicationError);
+        });
+
+        describe("when the rule has multiple segments", () => {
+            it("matches correct inputs", () => {
+                const result = grammar()
+                    .match(
+                        "InnerMatch",
+                        { x: "$X", y: "$Y" },
+                        ["(", variable("X"), ",", variable("Y"), ")"]
+                    )
+                    .match(
+                        "TestMatch",
+                        { x: "$X", y: "$Y" },
+                        ["[", invoke("InnerMatch", "X"), ",", invoke("InnerMatch", "Y"), "]"]
+                    )
+                    .parse("TestMatch", "[(abc,def),(xyz,uvw)]");
+                expect(result).toEqual({
+                    x: {
+                        x: "abc",
+                        y:  "def",
+                    },
+                    y: {
+                        x: "xyz",
+                        y: "uvw",
+                    },
+                });
+            });
+
+            it("rejects incorrect inputs", () => {
+                const test = () => grammar()
+                    .match(
+                        "InnerMatch",
+                        { x: "$X", y: "$Y" },
+                        ["(", variable("X"), ",", variable("Y"), ")"]
+                    )
+                    .match(
+                        "TestMatch",
+                        { x: "$X" },
+                        ["[", invoke("InnerMatch", "X"), ",", invoke("InnerMatch", "X"), "]"]
+                    )
+                    .parse("TestMatch", "[(abc,def),(xyz,uvw)]");
+                expect(test).toThrowError(ApplicationError);
+            });
+        });
+    });
+
+    describe("when matching ambiguous rules", () => {
+        it("matches correct inputs", () => {
+            const result = grammar()
+                .match("TestMatch", { value: "1" }, ["abc"])
+                .match("TestMatch", { value: "2" }, ["def"])
+                .match("TestMatch", { value: "3" }, ["(", variable("_"), ")"])
+                .parse("TestMatch", "def")
+            expect(result).toEqual({ value: "2" });
+        });
+
+        it("rejects incorrect inputs", () => {
+            const test = () => grammar()
+                .match("TestMatch", {}, ["(", variable("_"), ")"])
+                .match("TestMatch", {}, ["abc"])
+                .match("TestMatch", {}, ["def"])
+                .parse("TestMatch", "()")
             expect(test).toThrowError(ApplicationError);
         });
     });

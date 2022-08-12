@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npx jest"
+    "test": "npx jest",
+    "test:coverage": "npx jest --coverage",
+    "coverage": "http-server .\\coverage\\lcov-report\\"
   },
   "repository": {
     "type": "git",
