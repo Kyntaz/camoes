@@ -1,6 +1,7 @@
 import { applyLiterals, getErrorAndLog } from "./Apply";
 import { RuleLiteral } from "./RuleLiteral";
 import { StructureMapper } from "./StructureMapper";
+import { Variable } from "./Variable";
 import { makeEmptyVariableMap, VariableMap } from "./VariableMap";
 
 export class Rule {
@@ -23,7 +24,7 @@ export class Rule {
     applyPartial(text: string) {
         const variableMap = makeEmptyVariableMap();
         const remainingText = applyLiterals(this.sequence, text, variableMap);
-        const result = Rule.#applyVariables(this.mapper, variableMap);
+        const result = Rule.#replaceVariables(this.mapper, variableMap);
         return {
             remainingText,
             result,
@@ -38,24 +39,26 @@ export class Rule {
         return result;
     }
 
-    static #replaceVariable(value: string | StructureMapper, variableMap: VariableMap) {
-        if (typeof value === "string") {
-            if (value.startsWith("$")) {
-                return variableMap.get(value.slice(1)) ?? "";
-            } else {
-                return value;
-            }
+    static #replaceVariables(value: StructureMapper, variableMap: VariableMap): StructureMapper {
+        if (value instanceof Variable) {
+            return variableMap.get(value.name);
+        } else if (Array.isArray(value)) {
+            return Rule.#applyVariablesToList(value, variableMap);
         } else if (typeof value === "object") {
-            return Rule.#applyVariables(value, variableMap);
-        } else {
-            throw new Error("Invalid mapper.");
+            return Rule.#applyVariablesToObject(value, variableMap);
+        }  else {
+            return value;
         }
     }
 
-    static #applyVariables(mapper: StructureMapper, variableMap: VariableMap): StructureMapper {
-        return Object.keys(mapper).reduce<StructureMapper>((structure, key) => ({
+    static #applyVariablesToObject(object: { [key: string]: StructureMapper }, variableMap: VariableMap): StructureMapper {
+        return Object.keys(object).reduce<StructureMapper>((structure, key) => ({
             ...structure,
-            [key]: Rule.#replaceVariable(mapper[key], variableMap),
+            [key]: Rule.#replaceVariables(object[key], variableMap),
         }), {});
+    }
+
+    static #applyVariablesToList(list: StructureMapper[], variableMap: VariableMap): StructureMapper {
+        return list.map((value) => Rule.#replaceVariables(value, variableMap));
     }
 }
