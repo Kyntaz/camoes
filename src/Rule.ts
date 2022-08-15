@@ -3,14 +3,26 @@ import { RuleLiteral } from "./RuleLiteral";
 import { StructureMapper } from "./StructureMapper";
 import { Variable } from "./Variable";
 import { makeEmptyVariableMap, VariableMap } from "./VariableMap";
+import { validateVariables, VariableValidator } from "./VariableValidator";
 
 export class Rule {
     #sequence: RuleLiteral[];
     #mapper: StructureMapper;
+    #validator: VariableValidator;
+    #transformation: (result: StructureMapper) => any;
 
-    constructor(sequence: RuleLiteral[], mapper: StructureMapper) {
+    constructor(
+        sequence: RuleLiteral[],
+        mapper: StructureMapper,
+        {
+            validator = {} as VariableValidator,
+            transformation = (result: StructureMapper) => result as any,
+        } = {}
+    ) {
         this.#sequence = sequence;
         this.#mapper = mapper;
+        this.#validator = validator;
+        this.#transformation = transformation;
     }
 
     get sequence() {
@@ -24,7 +36,12 @@ export class Rule {
     applyPartial(text: string) {
         const variableMap = makeEmptyVariableMap();
         const remainingText = applyLiterals(this.sequence, text, variableMap);
-        const result = Rule.#replaceVariables(this.mapper, variableMap);
+
+        if (!validateVariables(this.#validator, variableMap)) {
+            throw getErrorAndLog(`Could not partially apply rule: Variables could not be validated.`);
+        }
+
+        const result = this.#transformation(Rule.#replaceVariables(this.mapper, variableMap));
         return {
             remainingText,
             result,
@@ -44,7 +61,7 @@ export class Rule {
             return variableMap.get(value.name);
         } else if (Array.isArray(value)) {
             return Rule.#applyVariablesToList(value, variableMap);
-        } else if (typeof value === "object") {
+        } else if (value && typeof value === "object") {
             return Rule.#applyVariablesToObject(value, variableMap);
         }  else {
             return value;

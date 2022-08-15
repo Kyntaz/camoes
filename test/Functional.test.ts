@@ -209,4 +209,20 @@ describe("#Functional", () => {
             expect(test).toThrowError(ApplicationError);
         });
     });
+
+    describe("when matching an empty rule", () => {
+        it("matches empty strings", () => {
+            const result = grammar()
+                .match("TestMatch", null, [])
+                .parse("TestMatch", "");
+            expect(result).toEqual(null);
+        });
+
+        it("rejects non-empty strings", () => {
+            const test = () => grammar()
+                .match("TestMatch", null, [])
+                .parse("TestMatch", "1");
+            expect(test).toThrowError(ApplicationError);
+        });
+    });
 });

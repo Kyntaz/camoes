@@ -4,6 +4,7 @@ import { Rule } from "./Rule";
 import { RuleLiteral } from "./RuleLiteral";
 import { StructureMapper } from "./StructureMapper";
 import { Variable } from "./Variable";
+import { VariableValidator } from "./VariableValidator";
 
 export class Grammar {
     #matchers = new Map<string, Matcher>();
@@ -17,8 +18,16 @@ export class Grammar {
         return matcher;
     }
 
-    match(name: string, mapper: StructureMapper, sequence: RuleLiteral[]) {
-        const rule = new Rule(sequence, mapper);
+    match(
+        name: string,
+        mapper: StructureMapper,
+        sequence: RuleLiteral[],
+        {
+            validator = {} as VariableValidator,
+            transformation = (result: StructureMapper) => result as any,
+        } = {}
+    ) {
+        const rule = new Rule(sequence, mapper, { validator, transformation });
         this.#getOrMakeMatcher(name).addRule(rule);
         return this;
     }
