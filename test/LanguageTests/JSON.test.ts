@@ -56,6 +56,7 @@ describe("#JSON Grammar", () => {
         const value = {
             x: "x",
             y: "y",
+            z: ["xyz"],
         };
         expect(jsonGrammar.parse("Json", JSON.stringify(value))).toEqual(value);
     });
