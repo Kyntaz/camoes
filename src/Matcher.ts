@@ -1,5 +1,6 @@
 import { ApplicationError, getErrorAndLog } from "./Apply";
 import { Rule } from "./Rule";
+import { RuleLiteral } from "./RuleLiteral";
 
 export class Matcher {
     #name: string;
@@ -21,10 +22,15 @@ export class Matcher {
         this.rules.push(rule);
     }
 
-    applyPartial(text: string) {
+    applyPartial(
+        text: string,
+        {
+            nextLiteral = null as RuleLiteral | null,
+        } = {}
+    ) {
         for (const rule of this.rules) {
             try {
-                return rule.applyPartial(text);
+                return rule.applyPartial(text, { nextLiteral });
             } catch (e) {
                 if (!(e instanceof ApplicationError)) {
                     throw e;

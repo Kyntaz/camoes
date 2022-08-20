@@ -20,6 +20,7 @@ export const applyLiterals = (
     variableMap: VariableMap,
     {
         test = false,
+        nextLiteral = null as RuleLiteral | null,
     } = {}
 ): string => {
     return literals.reduce<string>((currentText, literal, i) => {
@@ -28,7 +29,7 @@ export const applyLiterals = (
         } else if (helpers.isVariable(literal)) {
             return applyVariableLiteral(
                 literal,
-                (i + 1 < literals.length) ? literals[i+1] : null,
+                (i + 1 < literals.length) ? literals[i+1] : nextLiteral,
                 currentText,
                 variableMap,
                 { test }
@@ -38,7 +39,10 @@ export const applyLiterals = (
                 literal,
                 currentText,
                 variableMap,
-                { test }
+                {
+                    test,
+                    nextLiteral: (i + 1 < literals.length) ? literals[i+1] : nextLiteral,
+                }
             );
         } else if (helpers.isRegExp(literal)) {
             return applyRegExpLiteral(literal, currentText);
@@ -81,10 +85,11 @@ const applyVariableLiteral = (
     let remainder = "";
 
     if (nextLiteral) {
-        for (let i = 1; i < text.length; i++) {
+        for (let i = text.length - 1; i >= 0; i--) {
+            const value = text.slice(0, i);
             remainder = text.slice(i);
-            if (tryLiteral(nextLiteral, remainder, variableMap)) {
-                realValue = text.slice(0, i);
+            if (tryLiteral(nextLiteral, remainder, variableMap) && literal.guard(value)) {
+                realValue = value;
                 break;
             }
         }
@@ -92,7 +97,7 @@ const applyVariableLiteral = (
         realValue = text;
     }
     
-    if (!realValue) {
+    if (!realValue || !literal.guard(realValue)) {
         throw getErrorAndLog(`Can't apply variable literal: No valid configuration for ${literal.name} found in "${text}".`);
     }
 
@@ -123,9 +128,15 @@ const applyInvocationLiteral = (
     variableMap: VariableMap,
     {
         test = false,
+        nextLiteral = null as RuleLiteral | null,
     } = {}
 ) => {
-    const { remainingText, result } = literal.matcher.applyPartial(text);
+    const { remainingText, result } = literal.matcher.applyPartial(text, { nextLiteral });
+
+    if (!literal.variable.guard(result)) {
+        throw getErrorAndLog(`Can't apply invocation literal: Result did not match guard.`);
+    }
+
     const value = variableMap.get(literal.variable.name);
 
     if (!value && !test) {

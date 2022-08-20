@@ -8,7 +8,16 @@ const jsonGrammar = grammar()
     .match("Terminal", true, ["true"])
     .match("Terminal", false, ["false"])
     .match("Terminal", variable("X"), [invoke("String", "X")])
-    .match("String", variable("X"), ["\"", variable("X"), "\""])
+    .match("Terminal", variable("X"), [invoke("Number", "X")])
+    .match(
+        "Number",
+        variable("X"),
+        [variable("X", { guard: (value) => !isNaN(parseFloat(value)) })],
+        {
+            transformation: (result) => parseFloat(result),
+        }
+    )
+    .match("String", variable("X"), ["\"", variable("X", { guard: (value: string) => !value.includes("\"")}), "\""])
     .match(
         "Attribute",
         { key: variable("Key"), value: variable("Value") },
@@ -38,9 +47,9 @@ const jsonGrammar = grammar()
     .match(
         "Sequence",
         { head: variable("H"), tail: variable("T") },
-        [invoke("Json", "H"), whitespace, ",", lineBreak, invoke("Sequence", "Y")],
+        [invoke("Json", "H"), whitespace, ",", lineBreak, invoke("Sequence", "T")],
         {
-            transformation: (result) => [...result.tail, result.head],
+            transformation: (result) => [result.head, ...result.tail],
         }
     )
     .match("Sequence", [variable("X")], [invoke("Json", "X")])
@@ -52,11 +61,11 @@ const jsonGrammar = grammar()
 
 describe("#JSON Grammar", () => {
     it("parses some basic json", () => {
-        Logger.enabled = true;
         const value = {
             x: "x",
             y: "y",
-            z: ["xyz"],
+            z: ["xyz", true],
+            w: 23.4,
         };
         expect(jsonGrammar.parse("Json", JSON.stringify(value))).toEqual(value);
     });

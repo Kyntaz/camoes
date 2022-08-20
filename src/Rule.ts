@@ -33,9 +33,14 @@ export class Rule {
         return this.#mapper;
     }
 
-    applyPartial(text: string) {
+    applyPartial(
+        text: string,
+        {
+            nextLiteral = null as RuleLiteral | null,
+        } = {}
+    ) {
         const variableMap = makeEmptyVariableMap();
-        const remainingText = applyLiterals(this.sequence, text, variableMap);
+        const remainingText = applyLiterals(this.sequence, text, variableMap, { nextLiteral });
 
         if (!validateVariables(this.#validator, variableMap)) {
             throw getErrorAndLog(`Could not partially apply rule: Variables could not be validated.`);

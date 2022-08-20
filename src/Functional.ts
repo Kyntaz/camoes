@@ -1,4 +1,5 @@
 import { Grammar } from "./Grammar";
+import { StructureMapper } from "./StructureMapper";
 import { Variable } from "./Variable";
 
 let grammarCache: Grammar | null = null;
@@ -8,7 +9,12 @@ export const grammar = () => {
     return grammarCache;
 }
 
-export const variable = (name: string) => new Variable(name);
+export const variable = (
+    name: string,
+    {
+        guard = (value: string | StructureMapper) => true as boolean,
+    } = {}
+) => new Variable(name, { guard });
 
 export const invoke = (matcher: string, variableName: string) => {
     if (!grammarCache) {
