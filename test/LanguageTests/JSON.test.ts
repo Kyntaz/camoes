@@ -1,5 +1,4 @@
 import { grammar, invoke, variable } from "../../src/Functional";
-import { Logger } from "../../src/Logger";
 
 const whitespace = /\s*/;
 const lineBreak = /[\s\r\n]*/;
