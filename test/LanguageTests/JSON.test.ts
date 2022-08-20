@@ -1,7 +1,6 @@
 import { grammar, invoke, variable } from "../../src/Functional";
 import { Logger } from "../../src/Logger";
 
-// TODO: variable guards so that we can do numbers.
 const whitespace = /\s*/;
 const lineBreak = /[\s\r\n]*/;
 const jsonGrammar = grammar()
