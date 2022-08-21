@@ -158,13 +158,7 @@ describe("#Functional", () => {
                     .match(
                         "InnerMatch",
                         [variable("X"), variable("Y")],
-                        [
-                            "(",
-                            variable("X", { guard: (value: string) => !value.includes(")")}),
-                            ",",
-                            variable("Y", { guard: (value: string) => !value.includes(")")}),
-                            ")"
-                        ]
+                        ["(", variable("X"), ",", variable("Y"), ")"]
                     )
                     .match(
                         "TestMatch",

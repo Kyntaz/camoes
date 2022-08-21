@@ -12,9 +12,10 @@ export const grammar = () => {
 export const variable = (
     name: string,
     {
-        guard = (value: string | StructureMapper) => true as boolean,
+        greedy = false,
+        guard = (_value: string | StructureMapper) => true as boolean,
     } = {}
-) => new Variable(name, { guard });
+) => new Variable(name, { guard, greedy });
 
 export const invoke = (matcher: string, variableName: string) => {
     if (!grammarCache) {

@@ -85,7 +85,11 @@ const applyVariableLiteral = (
     let remainder = "";
 
     if (nextLiteral) {
-        for (let i = text.length - 1; i >= 0; i--) {
+        for (
+            let i = literal.greedy ? text.length - 1 : 0;
+            literal.greedy ? i >= 0 : i < text.length;
+            i += literal.greedy ? -1 : 1
+        ) {
             const value = text.slice(0, i);
             remainder = text.slice(i);
             if (tryLiteral(nextLiteral, remainder, variableMap) && literal.guard(value)) {

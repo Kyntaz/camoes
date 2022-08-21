@@ -10,7 +10,7 @@ const jsonGrammar = grammar()
     .match(
         "Number",
         variable("X"),
-        [variable("X", { guard: (value) => !isNaN(parseFloat(value)) })],
+        [variable("X", { greedy: true, guard: (value) => !isNaN(parseFloat(value)) })],
         {
             transformation: (result) => parseFloat(result),
         }
