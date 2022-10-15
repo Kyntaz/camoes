@@ -1,6 +1,6 @@
 {
   "name": "camoes",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "A grammar library for all your languaging needs",
   "main": "index.js",
   "type": "module",

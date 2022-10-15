@@ -1,6 +1,13 @@
-export {
+import {
     grammar,
     variable,
     invoke,
 } from "./Functional";
-export { Logger } from "./Logger";
+import { Logger } from "./Logger";
+
+export const Camoes = {
+    grammar,
+    variable,
+    invoke,
+    Logger,
+}
